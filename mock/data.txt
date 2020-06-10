@@ -1,0 +1,21 @@
+# HELP http_requests A summary of the pause duration of garbage collection cycles.
+# TYPE http_requests summary
+http_requests{handler="mail"} {{rand_int}}
+http_requests{status="200", handler="mail"} {{rand_int}}
+http_requests{status="500", handler="mail"} {{rand_int}}
+http_requests{handler="identity"} {{rand_int}}
+http_requests{status="200", handler="identity"} {{rand_int}}
+http_requests{status="500", handler="identity"} {{rand_int}}
+http_requests_sum {{rand_int}}
+http_requests_count {{rand_int}}
+# TYPE fabric_cluster_instances counter
+fabric_cluster_instances 3
+# TYPE fablic_node_memory histogram
+fablic_node_memory{type="email"} {{rand_int}}
+fablic_node_memory{type="identity"} {{rand_int}}
+# TYPE fablic_node_thread_count histogram
+fablic_node_thread_count{type="email"} 4
+fablic_node_thread_count{type="identity"} 3
+# TYPE fablic_node_avg_write_per_second histogram
+fablic_node_avg_write_per_second{type="email"} {{rand_int}}
+fablic_node_avg_write_per_second{type="identity"} {{rand_int}}
