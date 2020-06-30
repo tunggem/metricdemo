@@ -1,6 +1,7 @@
-const {initTracer} = require('jaeger-client');
+const { initTracer } = require('jaeger-client');
 const opentracing = require('opentracing');
 const persistor = require('./persistor');
+const { subscribe, sendEvent, EMAIL_SINGLE_ASYNC_CALL, IDENTITY_SINGLE_PERSISTOR_ASYNC_CALL } = require('./subscription');
 
 var config = {
   serviceName: 'identity-service',
@@ -29,23 +30,37 @@ var options = {
 
 const identityTracer = initTracer(config, options);
 
-console.log('initialized identityTracer');
-
-module.exports.getMail = (body, spanContext) => {
-  const span = identityTracer.startSpan('async_message_call', {childOf: spanContext})
-  span.log({'event':'ASYNC_MESSAGE_CALL'});
-  span.log({'event':'IDENTITY_HANDLE_MAIL_ASYNC'});
-  span.log({'data': body});
-  span.setTag(opentracing.Tags.SPAN_KIND_MESSAGING_CONSUMER, 'persistor');
+const getMail = (event) => {
+  const carrier = event.tracingData;
+  const parentSpanContext = identityTracer.extract(opentracing.FORMAT_TEXT_MAP, carrier);
+  const span = identityTracer.startSpan('async_message_call', { childOf: parentSpanContext })
+  span.log({ 'event': 'ASYNC_MESSAGE_CALL' });
+  // span.log({ 'event': 'IDENTITY_HANDLE_MAIL_ASYNC' });
+  span.log({ 'data': event.data });
+  // span.setTag(opentracing.Tags.SPAN_KIND_MESSAGING_CONSUMER, 'persistor');
   span.setTag(opentracing.Tags.SPAN_KIND_MESSAGING_PRODUCER, 'identity');
-  persistor.persistorHandler(body, span.context());
+  // persistor.persistorHandler(body, span.context());
   span.finish();
 }
 
-module.exports.multipleAsyncHandler = (body, spanContext) => {
-  const span = identityTracer.startSpan('multiple_async', {childOf: spanContext})
-  span.log({'event':'IDENTITY_HANDLE_MULTIPLE_ASYNC'});
-  span.log({'data': body});
+const multipleAsyncHandler = (event) => {
+  const span = identityTracer.startSpan('multiple_async', { childOf: spanContext })
+  span.log({ 'event': 'IDENTITY_HANDLE_MULTIPLE_ASYNC' });
+  span.log({ 'data': body });
   span.finish();
 }
+
+subscribe('identity', (event) => {
+  if (!event) return;
+
+  switch (event.typeName) {
+    case EMAIL_SINGLE_ASYNC_CALL:{
+      getMail(event)
+    }break;
+    default:{
+      console.log('not found handler',event)
+    }
+  }
+})
+
 
