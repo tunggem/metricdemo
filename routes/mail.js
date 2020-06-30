@@ -76,7 +76,6 @@ router.get('/async', async (req, res, next) => {
   });
 
   sendEvent(event);
-  // identityService.getMail(body, span.context());
   span.finish();
   res.status(200).json({ success: true });
 })
@@ -89,8 +88,16 @@ router.get('/multiple_async', async (req, res, next) => {
   span.setTag(opentracing.Tags.SPAN_KIND_MESSAGING_PRODUCER, 'mail');
   span.setTag(opentracing.Tags.SPAN_KIND_MESSAGING_CONSUMER, 'identity');
   span.setTag(opentracing.Tags.SPAN_KIND_MESSAGING_CONSUMER, 'persistor');
-  identityService.multipleAsyncHandler(body, span.context());
   persistorService.multipleAsyncHandler(body, span.context());
+  const event = eventBuilder({
+    data: body,
+    type: EMAIL_SINGLE_ASYNC_CALL,
+    source: 'mail',
+    targets: ['identity'],
+    tracingData
+  });
+
+  sendEvent(event);
   span.finish();
   res.status(200).json({ success: true });
 })
