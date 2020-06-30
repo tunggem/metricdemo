@@ -89,6 +89,8 @@ router.get('/multiple_async', async (req, res, next) => {
   span.setTag(opentracing.Tags.SPAN_KIND_MESSAGING_CONSUMER, 'identity');
   span.setTag(opentracing.Tags.SPAN_KIND_MESSAGING_CONSUMER, 'persistor');
   persistorService.multipleAsyncHandler(body, span.context());
+  const tracingData = {};
+  mailTracer.inject(span.context(), opentracing.FORMAT_TEXT_MAP, tracingData)
   const event = eventBuilder({
     data: body,
     type: EMAIL_SINGLE_ASYNC_CALL,
