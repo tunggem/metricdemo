@@ -58,7 +58,7 @@ router.get('/single', async (req, res, next) => {
   res.status(200).json({ success: true });
 })
 
-router.post('/async', async (req, res, next) => {
+router.get('/async', async (req, res, next) => {
   const span = mailTracer.startSpan('async_message_call');
   const body = { request: 'async request' };
   span.log({ 'event': 'ASYNC_MESSAGE_CALL' });
